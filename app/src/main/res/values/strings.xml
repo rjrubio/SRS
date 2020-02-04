@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Security Roving System</string>
+    <string name="permission_alert_dialog_title">SMS Permission</string>
+    <string name="permission_dialog_message">Allow application to send SMS?</string>
+    <string name="action_ok">Ok</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
