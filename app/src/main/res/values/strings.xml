@@ -3,6 +3,9 @@
     <string name="permission_alert_dialog_title">SMS Permission</string>
     <string name="permission_dialog_message">Allow application to send SMS?</string>
     <string name="action_ok">Ok</string>
+    <string name="app_title1">Security Guard Cebu</string>
+    <string name="app_title2">A member of PADPAO Inc.</string>
+    <string name="copy_right">Copyright 2020</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

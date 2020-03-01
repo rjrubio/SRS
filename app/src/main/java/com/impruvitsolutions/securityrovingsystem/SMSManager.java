@@ -1,18 +1,12 @@
 package com.impruvitsolutions.securityrovingsystem;
 
-import android.Manifest;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.telephony.SmsManager;
-
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+import android.util.Log;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class SMSManager {
     Context context = null;
@@ -29,9 +23,10 @@ public class SMSManager {
 
     }
 
-    public void sendSMS(List<String> recipients, String message){
+    public void sendSMS(Set<String> recipients, String message){
         SmsManager smgr = SmsManager.getDefault();
         for (String recipient:recipients){
+            Log.d("send SMS To: ",recipient);
             smgr.sendTextMessage(recipient,null,message,null,null);
         }
     }

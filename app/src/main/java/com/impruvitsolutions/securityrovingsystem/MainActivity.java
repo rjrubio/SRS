@@ -1,13 +1,14 @@
 package com.impruvitsolutions.securityrovingsystem;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentManager;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.PendingIntent;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -16,25 +17,28 @@ import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
-import android.nfc.tech.Ndef;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.util.Log;
+import android.text.InputType;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
-
-
+import java.util.Locale;
+import java.util.Set;
 
 
 public class MainActivity extends AppCompatActivity implements Listener{
 
     private List<String> user_lists = Arrays.asList(new String[]{"gabe", "apars","ron"});
-    private List<String> recipients_lists = Arrays.asList(new String[]{"09053635521", "09563371805","09665515556"});
+    public static Set<String> recipients_lists = new HashSet<>(Arrays.asList(new String[]{"09053635521", "09563371805","09665515556"}));
     private String userLogIn ="noOne";
 
     public static final String TAG = MainActivity.class.getSimpleName();
@@ -45,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements Listener{
     private boolean isDialogDisplayed = false;
 
     private NfcAdapter mNfcAdapter;
+    private Button add_number;
+    private Context mContext = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements Listener{
         } else {
 
         }
+         mContext = this;
+        initViews();
 
         //Check if NFC is available on device
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -65,17 +73,46 @@ public class MainActivity extends AppCompatActivity implements Listener{
             // Stop here, we definitely need NFC
             mEtMessage.setText("This device doesn't support NFC.");
             mEtMessage.setTextColor(Color.RED);
-            finish();
-            return;
 
         }
-
-        initViews();
         initNFC();
+        SharedPreferencesManager sharedPreferences = new SharedPreferencesManager(getApplicationContext());
+        sharedPreferences.setKey("recipients",recipients_lists);
     }
 
     private void initViews() {
         mEtMessage = findViewById(R.id.textViewLoginStatus);
+        add_number = findViewById(R.id.add_number_btn);
+        add_number.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View arg0) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+                builder.setTitle("Add recipient number");
+
+// Set up the input
+                final EditText input = new EditText(mContext);
+// Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_PHONE);
+                builder.setView(input);
+
+// Set up the buttons
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        recipients_lists.add(input.getText().toString());
+                        SharedPreferencesManager sharedPreferences = new SharedPreferencesManager(mContext);
+                        sharedPreferences.setKey("recipients",recipients_lists);
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
+            }
+        });
     }
 
     private void initNFC(){
@@ -83,13 +120,13 @@ public class MainActivity extends AppCompatActivity implements Listener{
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
     }
 
-    private void showReadFragment() {
+    private void showReadFragment(String user) {
 
         mNfcReadFragment = (NFCReadFragment) getSupportFragmentManager().findFragmentByTag(NFCReadFragment.TAG);
 
         if (mNfcReadFragment == null) {
 
-            mNfcReadFragment = NFCReadFragment.newInstance();
+            mNfcReadFragment = NFCReadFragment.newInstance(user);
         }
         onDialogDisplayed();
         getSupportFragmentManager().beginTransaction().add(R.id.main_layout,mNfcReadFragment,NFCReadFragment.TAG).commit();
@@ -168,10 +205,14 @@ public class MainActivity extends AppCompatActivity implements Listener{
                             if(authenticate(payloadText)){
                                 mEtMessage.setText("Welcome"+ userLogIn);
                                 mEtMessage.setTextColor(Color.GREEN);
-                                String messageToSend = "(SRS) BADGED IN SUCCESSFULLY ! USER : "+payloadText+"\n\n\n\nPOWEREDBY: IMPRUVITSOLUTIONS";
+                                String messageToSend = "(SRS) BADGED IN SUCCESSFULLY !\n USER : "+payloadText+"\n\n\n\nPOWEREDBY: IMPRUVITSOLUTIONS";
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                                String currentDateandTime = sdf.format(new Date());
+                                //String messageToSend = "Hortelano, "+payloadText+" (071-014526)"+" has logged in and is inside the school presmises at " +currentDateandTime+" This ia an official text message from IMPRUV UNIVERSITY";
                                 SMSManager sm = new SMSManager();
                                 sm.sendSMS(recipients_lists,messageToSend);
-                                showReadFragment();
+                                showReadFragment(payloadText);
+                                mNfcReadFragment.onNfcDetected(payloadText, userLogIn);
                             }else{
                                 mEtMessage.setText("Invalid USER");
                                 mEtMessage.setTextColor(Color.RED);
